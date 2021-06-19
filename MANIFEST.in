@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include rohandyes *.css
+recursive-include rohandyes *.csv
+recursive-include rohandyes *.html
+recursive-include rohandyes *.ico
+recursive-include rohandyes *.js
+recursive-include rohandyes *.json
+recursive-include rohandyes *.md
+recursive-include rohandyes *.png
+recursive-include rohandyes *.py
+recursive-include rohandyes *.svg
+recursive-include rohandyes *.txt
+recursive-exclude rohandyes *.pyc

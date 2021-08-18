@@ -9,6 +9,27 @@ app_color = "grey"
 app_email = "info@finbyz.com"
 app_license = "GPL 3.0"
 
+doctype_js = {
+	"Ball Mill Data Sheet": "public/js/doctype_js/ball_mill_data_sheet.js",
+	"Outward Sample":"public/js/doctype_js/outward_sample.js"
+}
+
+doc_events = {
+	"Work Order": {
+		"validate": "rohandyes.rohandyes.doc_events.work_order.validate",
+		"on_submit": "rohandyes.rohandyes.doc_events.work_order.on_submit",
+		"on_cancel": "rohandyes.rohandyes.doc_events.work_order.on_cancel"	
+	},
+	"Ball Mill Data Sheet": {
+		"validate": "rohandyes.rohandyes.doc_events.ball_mill_data_sheet.validate",
+		"on_submit": "rohandyes.rohandyes.doc_events.ball_mill_data_sheet.on_submit",
+		"on_cancel": "rohandyes.rohandyes.doc_events.ball_mill_data_sheet.on_cancel",
+	},
+	"Sales Invoice":{
+		"on_submit":"rohandyes.rohandyes.doc_events.sales_invoice.on_submit"
+	}
+}
+
 # Includes in <head>
 # ------------------
 
@@ -99,7 +120,11 @@ app_license = "GPL 3.0"
 
 # Scheduled Tasks
 # ---------------
-
+scheduler_events = {
+	"daily":[
+		"rohandyes.rohandyes.doc_events.lead.auto_close_lead"
+	]
+}
 # scheduler_events = {
 # 	"all": [
 # 		"rohandyes.tasks.all"
@@ -134,7 +159,7 @@ app_license = "GPL 3.0"
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
 # override_doctype_dashboards = {
-# 	"Task": "rohandyes.task.get_dashboard_data"
+# 	"Quotation": "rohandyes.rohandyes.dashboard.quotation.get_data",
 # }
 
 # exempt linked doctypes from being automatically cancelled

@@ -27,6 +27,29 @@ doc_events = {
 	},
 	"Sales Invoice":{
 		"on_submit":"rohandyes.rohandyes.doc_events.sales_invoice.on_submit"
+	},
+	"Outward Sample":{
+		"on_submit":"rohandyes.rohandyes.doc_events.outward_sample.on_submit",
+		"before_update_after_submit":"rohandyes.rohandyes.doc_events.outward_sample.before_update_after_submit",
+		"on_cancel":"rohandyes.rohandyes.doc_events.outward_sample.on_cancel",
+		"on_trash":"rohandyes.rohandyes.doc_events.outward_sample.on_trash"
+	},
+	"Outward Tracking":{
+		"on_submit":"rohandyes.rohandyes.doc_events.outward_tracking.on_submit",
+		"before_update_after_submit":"rohandyes.rohandyes.doc_events.outward_tracking.before_update_after_submit",
+		"on_cancel":"rohandyes.rohandyes.doc_events.outward_tracking.on_cancel",
+		"on_trash":"rohandyes.rohandyes.doc_events.outward_tracking.on_trash"
+	},
+	"Quotation":{
+		"on_submit":"rohandyes.rohandyes.doc_events.quotation.on_submit",
+		"before_cancel":"rohandyes.rohandyes.doc_events.quotation.before_cancel",
+		"on_trash":"rohandyes.rohandyes.doc_events.quotation.on_trash"		
+	},
+	"Sales Order":{
+		"on_submit":"rohandyes.rohandyes.doc_events.sales_order.on_submit",
+		"before_update_after_submit":"rohandyes.rohandyes.doc_events.sales_order.before_update_after_submit",
+		"on_cancel":"rohandyes.rohandyes.doc_events.sales_order.on_cancel",
+		"on_trash":"rohandyes.rohandyes.doc_events.sales_order.on_trash"		
 	}
 }
 

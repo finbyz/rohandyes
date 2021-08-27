@@ -21,3 +21,23 @@ frappe.ui.form.on("Outward Sample",{
 		}
 	}
 })
+frappe.ui.form.on("Outward Sample Detail",{
+	standard_reference: function(frm,cdt,cdn){
+		let d = locals[cdt][cdn]
+		if(d.standard_reference){
+			frappe.db.get_value("Item Standard Concentration",d.standard_reference,['item_name','concentration'],function(r){
+				frappe.model.set_value(d.doctype,d.name,'item_code',r.item_name)
+				frappe.model.set_value(d.doctype,d.name,'concentration',r.concentration)
+				frm.script_manager.trigger('item_code', d.doctype, d.name);
+				frm.script_manager.trigger('concentration', d.doctype, d.name);
+			})
+		}
+		else{
+			frappe.model.set_value(d.doctype,d.name,'item_code','')
+			frappe.model.set_value(d.doctype,d.name,'concentration',0)
+			frm.script_manager.trigger('item_code', d.doctype, d.name);
+			frm.script_manager.trigger('concentration', d.doctype, d.name);
+		}
+		frm.refresh_field('details')
+	}
+})

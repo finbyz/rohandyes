@@ -24,8 +24,8 @@ def execute(filters=None):
 		if from_date > to_date:
 			frappe.throw(_("From Date cannot be less than To Date"))
 
-	columns = get_columns(filters)
-	data = get_data(filters)
+	columns, columns_list = get_columns(filters)
+	data = get_data(filters,columns_list)
 	
 	return columns, data
 
@@ -36,17 +36,23 @@ def get_columns(filters):
 		# {"label": _("Qty To Manufacture"), "fieldname": "qty", "fieldtype": "Float", "width": 100},
 		{"label": _("Manufactured Qty"), "fieldname": "real_produced_qty", "fieldtype": "Float", "width": 100},
 		{"label": _("Price"), "fieldname": "valuation_price", "fieldtype": "Float", "width": 100},
+		{"label": _("Concentration"), "fieldname": "concentration", "fieldtype": "Percent", "width": 100},
+		{"label": _("Standard Qty"), "fieldname": "standard_quantity", "fieldtype": "Float", "width": 100},
+		{"label": _("Standard Price"), "fieldname": "standard_price", "fieldtype": "Float", "width": 100},
 		{"label": _("Lot No"), "fieldname": "lot_no", "fieldtype": "Data", "width": 120},
 		{"label": _("Yield"), "fieldname": "batch_yield", "fieldtype": "Percent", "width": 80},
 	]
 
 	# append dynamic columns for item used for Manufacturing
 	data = column_query(filters)
+	columns_list = []
 	if data:
-		columns.append({"label": _("{}".format(data[0][1])), "fieldname": str(clean_string(data[0][1])), "fieldtype": "Float", "width": 100})
+		columns_list.append(str(clean_string(data[0][1])))
+		columns.append({"label": _("{}".format(data[0][1])), "fieldname": str(clean_string(data[0][1])), "fieldtype": "Float", "width": 100,"default":0.0})
 	for d in data:
 		if d[0] != d[1]:
-			x = {"label": _("{}".format(d[0])), "fieldname": str(clean_string(d[0])), "fieldtype": "Float", "width": 100}
+			columns_list.append(str(clean_string(d[0])))
+			x = {"label": _("{}".format(d[0])), "fieldname": str(clean_string(d[0])), "fieldtype": "Float", "width": 100,"default":0.0}
 			columns.append(x)
 
 	# columns += [
@@ -54,10 +60,10 @@ def get_columns(filters):
 	# 	# {"label": _("Valuation Rate"), "fieldname": "valuation_rate", "fieldtype": "Currency", "width": 80},
 	# ]
 
-	return columns
+	return columns,columns_list
 
-def get_data(filters):
-	data = data_query(filters)
+def get_data(filters,columns_list):
+	data = data_query(filters,columns_list)
 
 	return data
 
@@ -85,7 +91,7 @@ def column_query(filters):
 
 	return column
 
-def data_query(filters):
+def data_query(filters,columns_list):
 	# getting data from filters
 	production_item = re.escape(filters.get("production_item", ""))
 	company = re.escape(filters.get("company", ""))
@@ -93,22 +99,22 @@ def data_query(filters):
 	to_date = filters.get("to_date", None)
 	
 	# adding where condition according to filters
-	condition = ''
+	condition = 'where wo.docstatus = 1 '
 	format_ = '%Y-%m-%d %H:%M:%S'
 	if from_date:		
-		condition += 'AND ' if condition != '' else 'WHERE '
+		condition += ' AND ' if condition != '' else 'WHERE '
 		condition += "DATE(wo.planned_start_date) >= '{}' \n".format(str(from_date))
 		
 	if to_date:
-		condition += 'AND ' if condition != '' else 'WHERE '
+		condition += ' AND ' if condition != '' else 'WHERE '
 		condition += "DATE(wo.planned_start_date) <= '{}' \n".format(str(to_date))
 
 	if production_item:
-		condition += 'AND ' if condition != '' else 'WHERE '
+		condition += ' AND ' if condition != '' else 'WHERE '
 		condition += "wo.production_item = '{}' \n".format(production_item)
 	
 	if company:
-		condition += 'AND ' if condition != '' else 'WHERE '
+		condition += ' AND ' if condition != '' else 'WHERE '
 		condition += "wo.company = '{}' \n".format(company)
 	
 	# sql query to get data for column
@@ -119,8 +125,10 @@ def data_query(filters):
 	wo.lot_no,
 	wo.produced_qty,
 	wo.produced_quantity,
-	wo.concentration,
 	wo.valuation_price,
+	wo.concentration,
+	wo.standard_quantity,
+	wo.standard_price,
 	wo.batch_yield
 	FROM  `tabWork Order Item` as woi
 	LEFT JOIN `tabWork Order` as wo ON woi.parent = wo.name 
@@ -142,10 +150,14 @@ def data_query(filters):
 
 		for key, value in sub_data:
 			key = clean_string(key)
-			item[key] = value
+			item[key] = value or 0
 		
 		# calculating real manufacturing quantity
 		item['real_produced_qty'] = produced_quantity
-	
+
+		for column in columns_list:
+			if not item.get(column):
+				item[column] = 0
+		
 	return data
 

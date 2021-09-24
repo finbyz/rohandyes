@@ -8,13 +8,13 @@ frappe.query_reports["Sales Comments"] = {
 			fieldname: "from_date",
 			label:__("From Date"),
 			fieldtype: "Date",
-			default : frappe.datetime.nowdate()
+			default : frappe.datetime.add_days(frappe.datetime.nowdate(),-1)
 		},
 		{
 			fieldname: "to_date",
 			label:__("To Date"),
 			fieldtype: "Date",
-			default : frappe.datetime.nowdate()
+			default : frappe.datetime.add_days(frappe.datetime.nowdate(),0)
 		},
 		{
 			fieldname: "doctype",
@@ -27,6 +27,11 @@ frappe.query_reports["Sales Comments"] = {
 			label: __("User"),
 			fieldtype: "Link",
 			options: "User"
+		},
+		{
+			fieldname: "show_subject_email",
+			label: __("Show Email Subjects"),
+			fieldtype: "Check"
 		}
 	]
 }

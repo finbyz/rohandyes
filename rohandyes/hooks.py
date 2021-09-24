@@ -9,16 +9,24 @@ app_color = "grey"
 app_email = "info@finbyz.com"
 app_license = "GPL 3.0"
 
+from chemical.chemical.doctype.ball_mill_data_sheet.ball_mill_data_sheet import BallMillDataSheet
+from rohandyes.rohandyes.doc_events.ball_mill_data_sheet import set_incoming_rate
+BallMillDataSheet.set_incoming_rate=set_incoming_rate
+
+
+
 doctype_js = {
 	"Ball Mill Data Sheet": "public/js/doctype_js/ball_mill_data_sheet.js",
-	"Outward Sample":"public/js/doctype_js/outward_sample.js"
+	"Outward Sample":"public/js/doctype_js/outward_sample.js",
+	"Sales Invoice":"public/js/doctype_js/sales_invoice.js"
 }
 
 doc_events = {
 	"Work Order": {
 		"validate": "rohandyes.rohandyes.doc_events.work_order.validate",
 		"on_submit": "rohandyes.rohandyes.doc_events.work_order.on_submit",
-		"on_cancel": "rohandyes.rohandyes.doc_events.work_order.on_cancel"	
+		"on_cancel": "rohandyes.rohandyes.doc_events.work_order.on_cancel",
+		"on_update_after_submit":"rohandyes.rohandyes.doc_events.work_order.on_update_after_submit",
 	},
 	"Ball Mill Data Sheet": {
 		"validate": "rohandyes.rohandyes.doc_events.ball_mill_data_sheet.validate",
@@ -48,8 +56,11 @@ doc_events = {
 	"Sales Order":{
 		"on_submit":"rohandyes.rohandyes.doc_events.sales_order.on_submit",
 		"before_update_after_submit":"rohandyes.rohandyes.doc_events.sales_order.before_update_after_submit",
-		"on_cancel":"rohandyes.rohandyes.doc_events.sales_order.on_cancel",
+		"before_cancel":"rohandyes.rohandyes.doc_events.sales_order.before_cancel",
 		"on_trash":"rohandyes.rohandyes.doc_events.sales_order.on_trash"		
+	},
+	"BOM":{
+		"on_update_after_submit":"rohandyes.rohandyes.doc_events.bom.on_update_after_submit",
 	}
 }
 

@@ -47,6 +47,8 @@ def status_change_comment(self):
         reference_name = self.party_name
 
     else:
+        select_status = "docstatus"
+        status = docstatus
         reference_doctype = "Customer"
         reference_name = self.customer
     
@@ -71,7 +73,7 @@ def cancellation_comment(self):
     if self.doctype == "Outward Tracking":
         self.tracking_status = "Cancelled"
     elif self.doctype == "Outward Sample":
-        self.status = "Cancelled"
+        self.status = "Rejected"
     status_change_comment(self)
 
 def delete_comment(self):

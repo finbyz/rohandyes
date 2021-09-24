@@ -64,12 +64,23 @@ def get_data(filters):
 		FROM
 			`tabComment` as co
 		WHERE
-			co.comment_type="Comment"
+			co.comment_type in ("Comment","Info")
 			%s
 		ORDER BY
 			co.creation DESC"""%where_clause, as_dict=1)
 
-			
+	if filters.get('show_subject_email'):
+		data += frappe.db.sql("""
+			SELECT
+				co.reference_doctype as "Ref DocType", co.reference_name as "Ref DocName", co.owner as "User" , co.creation as "Date", co.subject as "Comment", co.owner as comment_email
+			FROM
+				`tabCommunication` as co
+			WHERE
+				co.sent_or_received = 'Sent'
+				%s
+			ORDER BY
+				co.creation DESC"""%where_clause, as_dict=1)
+
 	for row in data:
 		row["Next Contact Date"] = get_next_contact_date(row, filters)
 		row["Mobile"] = get_contact(row, filters)

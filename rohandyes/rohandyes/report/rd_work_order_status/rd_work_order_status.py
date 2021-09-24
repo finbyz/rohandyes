@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe import _
-# import frappe
+from frappe.utils import flt
 import re
 
 # function to clean string for names in coloumn
@@ -47,13 +47,15 @@ def get_columns(filters):
 	data = column_query(filters)
 	columns_list = []
 	if data:
-		columns_list.append(str(clean_string(data[0][1])))
-		columns.append({"label": _("{}".format(data[0][1])), "fieldname": str(clean_string(data[0][1])), "fieldtype": "Float", "width": 100,"default":0.0})
+		columns_list.append(frappe._dict({"qty":str(clean_string(data[0][1])) + "_qty","rate":str(clean_string(data[0][1])) + "_rate"}))
+		columns.append({"label": _("{} Qty".format(data[0][1])), "fieldname": str(clean_string(data[0][1])) + "_qty", "fieldtype": "Float", "width": 100,"default":0.0})
+		columns.append({"label": _("{} Rate".format(data[0][1])), "fieldname": str(clean_string(data[0][1])) + "_rate", "fieldtype": "Currency", "width": 100,"default":0.0})
+
 	for d in data:
 		if d[0] != d[1]:
-			columns_list.append(str(clean_string(d[0])))
-			x = {"label": _("{}".format(d[0])), "fieldname": str(clean_string(d[0])), "fieldtype": "Float", "width": 100,"default":0.0}
-			columns.append(x)
+			columns_list.append(frappe._dict({"qty":str(clean_string(d[0])) + "_qty","rate":str(clean_string(d[0])) + "_rate"}))
+			columns.append({"label": _("{} Qty".format(d[0])), "fieldname": str(clean_string(d[0])) + "_qty", "fieldtype": "Float", "width": 100,"default":0.0})
+			columns.append({"label": _("{} Rate".format(d[0])), "fieldname": str(clean_string(d[0])) + "_rate", "fieldtype": "Currency", "width": 100,"default":0.0})
 
 	# columns += [
 	# 	# {"label": _("Concentration / Purity"), "fieldname": "concentration", "fieldtype": "Percent", "width": 100},
@@ -134,7 +136,9 @@ def data_query(filters,columns_list):
 	LEFT JOIN `tabWork Order` as wo ON woi.parent = wo.name 
 	{}
 	GROUP BY wo.name
-	""".format(condition), as_dict=1)
+	ORDER BY wo.creation desc
+	LIMIT {}
+	""".format(condition,filters.get("no_of_wo")), as_dict=1)
 
 	# sub query to find transferred quantity of item used for manufacturing
 	for item in data:
@@ -143,21 +147,35 @@ def data_query(filters,columns_list):
 		concentration = item.get('concentration', 0)
 
 		# frappe.msgprint(name)
-		sub_data = frappe.db.sql("""SELECT 
-		item_code,qty
-		FROM `tabWork Order Item` 
-		WHERE parent = '{}'""".format(name))
+		sub_data = frappe.db.sql("""
+		SELECT 
+			woi.item_code,woi.qty, ip.price_list_rate as rate
+		FROM
+			`tabWork Order Item` as woi
+			LEFT JOIN `tabItem Price` as ip on ip.item_code = woi.item_code and ip.price_list = '{}'
+		WHERE
+			woi.parent = '{}'""".format(filters.get('price_list'),name),as_dict=1)
 
-		for key, value in sub_data:
-			key = clean_string(key)
-			item[key] = value or 0
+		for item_row in sub_data:
+			qty_key = str(clean_string(item_row.item_code) + "_qty")
+			rate_key = str(clean_string(item_row.item_code) + "_rate")
+			item[qty_key] = item_row.qty or 0
+			item[rate_key] = item_row.rate or 0
 		
 		# calculating real manufacturing quantity
 		item['real_produced_qty'] = produced_quantity
 
+		amount = 0
 		for column in columns_list:
-			if not item.get(column):
-				item[column] = 0
+			if not item.get(column.qty):
+				item[column.qty] = 0
+			if not item.get(column.rate):
+				item[column.rate] = 0
 		
+			if item.get(column.qty) and item.get(column.rate):
+				amount += flt(item[column.qty] * item[column.rate],3)
+
+		item['valuation_price'] = amount / item.real_produced_qty if amount and item.real_produced_qty else 0
+		item['standard_price'] = amount / item.standard_quantity if amount and item.standard_quantity else 0
 	return data
 

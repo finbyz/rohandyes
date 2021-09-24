@@ -1,11 +1,51 @@
 import frappe
-from frappe.utils import flt
+from frappe.utils import flt, cstr
 from erpnext.manufacturing.doctype.bom.bom import BOM
 
 def validate(self,method):
 	get_rate(self)
 	yield_calculation(self)
 	calculate_total(self)
+
+def on_update_after_submit(self,method):
+	update={}
+	bom_concentration=frappe.db.get_value("BOM",self.bom_no,"concentration")
+	frappe.db.set_value("Work Order",self.name,"bom_concentration",bom_concentration)
+	update['concentration_compared_to_standard']=self.concentration_compared_to_standard
+	update['bom_concentration']=bom_concentration
+	update['concentration']= flt(update['bom_concentration']) * flt(update['concentration_compared_to_standard'])/100
+	calculate_concentration_after_submit(self,update)
+	yield_calculation_after_submit(self,update)
+	calculate_total_after_submit(self,update)
+	frappe.reload_doc("manufacturing","doctype","work_order")
+
+
+def calculate_concentration_after_submit(self,update):
+	frappe.db.set_value("Work Order",self.name,"concentration",flt(update['bom_concentration'])*flt(update['concentration_compared_to_standard'])/100)
+
+def yield_calculation_after_submit(self,update):
+	if self.concentration and self.produced_quantity:
+		cal_yield = 0
+		for d in self.required_items:
+			if self.based_on and self.based_on == d.item_code and d.qty:
+				cal_yield = flt(self.standard_quantity) / flt(d.qty)
+				# cal_yield = flt(self.produced_quantity*update['concentration_compared_to_standard']/100) / flt(d.qty)	
+		batch_yield = cal_yield
+		frappe.db.set_value("Work Order",self.name,"batch_yield",cal_yield)
+
+def calculate_total_after_submit(self,update):
+	total_amount = 0.0
+	total_qty = 0.0
+	concentration = update['concentration_compared_to_standard'] or 100
+	for row in self.required_items:
+		total_amount += flt(row.amount)
+		total_qty += flt(row.qty)
+	valuation_price = flt(self.total_amount) / flt(self.produced_quantity)
+	standard_quantity = flt(self.produced_quantity * concentration / 100)
+	standard_price = flt((valuation_price * 100) / concentration)
+	frappe.db.set_value("Work Order",self.name,"standard_quantity",standard_quantity)
+	frappe.db.set_value("Work Order",self.name,"standard_price",standard_price)
+
 
 def get_rate(self):
 	for d in self.get("required_items"):
@@ -18,16 +58,34 @@ def get_rate(self):
 def on_submit(self,method):
 	if self.produced_quantity:
 		self.db_set('status',"Completed")
+	create_batch(self)
 	#create_bom(self)
 
+def create_batch(self):
+	if frappe.db.get_value("Item",self.production_item,'has_batch_no'):
+		batch = frappe.new_doc("Batch")
+		batch.item = self.production_item
+		batch.lot_no = cstr(self.lot_no)
+		# batch.packaging_material = cstr(row.packaging_material)
+		# batch.packing_size = cstr(row.packing_size)
+		batch.batch_yield = flt(self.batch_yield, 3)
+		batch.concentration = flt(self.concentration, 3)
+		batch.valuation_rate = flt(self.valuation_price, 4)
+		batch.reference_doctype = self.doctype
+		batch.reference_name = self.name
+		batch.insert()
+	#self.db_set('batch',batch.name)
+
 def on_cancel(self,method):
-	pass
+	if frappe.db.exists("Batch",{'reference_doctype':self.doctype,'reference_name':self.name}):
+		batch_no = frappe.get_doc({"doctype":"Batch",'reference_doctype':self.doctype,'reference_name':self.name})
+		frappe.delete_doc("Batch", batch_no.name)
 	#cancel_bom(self)
 
 def calculate_total(self):
 	total_amount = 0.0
 	total_qty = 0.0
-	concentration = self.concentration or 100
+	concentration = self.concentration_compared_to_standard or 100
 	for row in self.required_items:
 		row.amount = flt(row.rate) * flt(row.qty)
 		total_amount += flt(row.amount)
@@ -76,5 +134,5 @@ def yield_calculation(self):
 		cal_yield = 0
 		for d in self.required_items:
 			if self.based_on and self.based_on == d.item_code and d.qty:
-				cal_yield = flt(self.produced_quantity*self.concentration/100) / flt(d.qty)	
+				cal_yield = flt(self.standard_quantity) / flt(d.qty)	
 		self.batch_yield = cal_yield

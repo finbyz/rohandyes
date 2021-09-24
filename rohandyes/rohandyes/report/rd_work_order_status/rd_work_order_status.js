@@ -33,6 +33,21 @@ frappe.query_reports["RD Work Order Status"] = {
 			"fieldtype": "Link",
 			"options": "Company",
 			"default": frappe.defaults.get_user_default("company")
+		},
+		{
+			"fieldname":"price_list",
+			"label": __("Price List"),
+			"fieldtype": "Link",
+			"options": "Price List",
+			"default": "Standard Buying",
+			"reqd":1
+		},
+		{
+			"fieldname":"no_of_wo",
+			"label": __("No. of Work Order"),
+			"fieldtype": "Int",
+			"default": 10,
+			"reqd":1
 		}
 	]
 }

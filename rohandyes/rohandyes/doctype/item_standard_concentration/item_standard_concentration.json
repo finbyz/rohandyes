@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "autoname": "naming_series:",
  "creation": "2021-08-17 18:12:40.815955",
  "doctype": "DocType",
@@ -37,7 +38,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-08-17 18:13:20.802859",
+ "modified": "2021-09-24 09:37:30.568841",
  "modified_by": "Administrator",
  "module": "Rohandyes",
  "name": "Item Standard Concentration",
@@ -80,7 +81,9 @@
    "write": 1
   }
  ],
+ "search_fields": "item_name,concentration",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "title_field": "item_name",
  "track_changes": 1
 }
